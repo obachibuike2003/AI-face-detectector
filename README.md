@@ -1,6 +1,4 @@
-Here's a clean, professional `README.md` for your **Flask-based Face Detection & Attendance Logger** project using MTCNN and OpenCV:
 
----
 
 # 🧠 Face Detection Attendance Logger
 
