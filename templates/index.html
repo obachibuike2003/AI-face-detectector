@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Attendance System</title>
+    <style>
+        /* Basic Reset & Box Sizing */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Body Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5; /* Light grey background */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        /* Container for the entire application */
+        .container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        h2 {
+            font-size: 1.8em;
+            color: #34495e;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Section Styling */
+        .section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Form Styling */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background-color: #fff;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="file"]:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 12px 20px;
+            background-color: #007bff; /* Blue button */
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 600;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-left-color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: none; /* Hidden by default */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Result Display */
+        #uploadResult {
+            background-color: #e9f7ef; /* Light green background for success */
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        #uploadResult.error {
+            background-color: #fbecec; /* Light red for errors */
+            border-color: #f5c6cb;
+        }
+
+        #uploadResult h3 {
+            font-size: 1.5em;
+            color: #28a745; /* Green for success */
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        #uploadResult.error h3 {
+            color: #dc3545; /* Red for errors */
+        }
+
+        #facesDetected {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .image-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .image-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .image-wrapper p {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .image-display img {
+            max-width: 250px;
+            max-height: 200px;
+            height: auto;
+            border-radius: 6px;
+            object-fit: contain;
+            border: 1px solid #eee;
+        }
+
+        .error-message {
+            color: #dc3545; /* Red for errors */
+            font-weight: 600;
+            margin-top: 15px;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+
+        /* Attendance Log Table */
+        .table-container {
+            overflow-x: auto; /* Allows horizontal scrolling for small screens */
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #eef; /* Light blue header */
+            color: #333;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f6f6f6; /* Zebra striping */
+        }
+
+        tbody tr:hover {
+            background-color: #e0f2f7; /* Hover effect */
+        }
+
+        .table-link {
+            color: #007bff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .table-link:hover {
+            text-decoration: underline;
+            color: #0056b3;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            .container {
+                padding: 20px;
+            }
+            .section {
+                padding: 20px;
+            }
+            .image-display {
+                flex-direction: column;
+                align-items: center;
+            }
+            .image-display img {
+                max-width: 100%; /* Make images fill container on small screens */
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Face Attendance System</h1>
+
+        <!-- Image Upload Section -->
+        <div class="section">
+            <h2>Upload Image for Attendance</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="imageUpload">Select an Image:</label>
+                    <input type="file" id="imageUpload" name="image" accept="image/*" required>
+                </div>
+                <button type="submit" id="uploadButton">
+                    <span id="uploadButtonText">Process Image</span>
+                    <div id="loadingSpinner" class="loading-spinner"></div>
+                </button>
+            </form>
+
+            <div id="uploadResult" class="upload-result">
+                <h3 id="resultTitle">Detection Result:</h3>
+                <p id="facesDetected"></p>
+                <div class="image-display">
+                    <div class="image-wrapper">
+                        <p>Original Image</p>
+                        <img id="originalImage" src="" alt="Original Image">
+                    </div>
+                    <div class="image-wrapper">
+                        <p>Detected Faces</p>
+                        <img id="resultImage" src="" alt="Processed Image">
+                    </div>
+                </div>
+                <p id="errorMessage" class="error-message"></p>
+            </div>
+        </div>
+
+        <!-- Attendance Log Section -->
+        <div class="section">
+            <h2>Attendance Log</h2>
+            <button id="refreshLogs">Refresh Logs</button>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Faces Detected</th>
+                            <th>Image</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTableBody">
+                        <!-- Logs will be inserted here by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="logErrorMessage" class="error-message"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get references to DOM elements
+            const uploadForm = document.getElementById('uploadForm');
+            const imageUpload = document.getElementById('imageUpload');
+            const uploadButton = document.getElementById('uploadButton');
+            const uploadButtonText = document.getElementById('uploadButtonText');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+
+            const uploadResultDiv = document.getElementById('uploadResult');
+            const resultTitle = document.getElementById('resultTitle');
+            const facesDetectedSpan = document.getElementById('facesDetected');
+            const originalImage = document.getElementById('originalImage');
+            const resultImage = document.getElementById('resultImage');
+            const errorMessageDiv = document.getElementById('errorMessage');
+
+            const refreshLogsButton = document.getElementById('refreshLogs');
+            const attendanceTableBody = document.getElementById('attendanceTableBody');
+            const logErrorMessageDiv = document.getElementById('logErrorMessage');
+
+            /**
+             * Shows or hides the loading spinner and disables/enables the button.
+             * @param {boolean} isLoading - True to show loading, false to hide.
+             */
+            function showLoading(isLoading) {
+                if (isLoading) {
+                    loadingSpinner.style.display = 'block';
+                    uploadButtonText.textContent = 'Processing...';
+                    uploadButton.disabled = true;
+                } else {
+                    loadingSpinner.style.display = 'none';
+                    uploadButtonText.textContent = 'Process Image';
+                    uploadButton.disabled = false;
+                }
+            }
+
+            /**
+             * Displays an error message in the upload result section.
+             * @param {string} message - The error message to display.
+             */
+            function displayUploadError(message) {
+                uploadResultDiv.style.display = 'flex'; // Show the result div
+                uploadResultDiv.classList.add('error'); // Add error class for styling
+                resultTitle.textContent = 'Error during Detection:';
+                resultTitle.style.color = '#dc3545'; // Red color for error title
+                facesDetectedSpan.textContent = ''; // Clear faces detected text
+                originalImage.src = ''; // Clear image sources
+                resultImage.src = '';
+                originalImage.alt = '';
+                resultImage.alt = '';
+                errorMessageDiv.textContent = message;
+                errorMessageDiv.style.display = 'block'; // Show the error message
+            }
+
+            /**
+             * Displays successful upload results.
+             * @param {object} data - The data received from the server.
+             */
+            function displayUploadSuccess(data) {
+                uploadResultDiv.style.display = 'flex'; // Show the result div
+                uploadResultDiv.classList.remove('error'); // Remove error class
+                resultTitle.textContent = 'Detection Result:';
+                resultTitle.style.color = '#28a745'; // Green color for success title
+                facesDetectedSpan.textContent = `Faces Detected: ${data.faces_detected}`;
+                originalImage.src = `/${data.original_image_url}`;
+                originalImage.alt = `Original Image (${data.faces_detected} faces)`;
+                resultImage.src = `/${data.result_image_url}`;
+                resultImage.alt = `Processed Image (${data.faces_detected} faces)`;
+                errorMessageDiv.style.display = 'none'; // Hide error message
+            }
+
+            // Event listener for image upload form submission
+            uploadForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent default form submission
+
+                // Reset previous display states
+                uploadResultDiv.style.display = 'none';
+                errorMessageDiv.style.display = 'none';
+                showLoading(true); // Show loading indicator
+
+                const formData = new FormData();
+                if (imageUpload.files.length > 0) {
+                    formData.append('image', imageUpload.files[0]);
+                } else {
+                    displayUploadError("Please select an image file before processing.");
+                    showLoading(false);
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        displayUploadSuccess(data);
+                        fetchAttendanceLogs(); // Refresh attendance logs after successful upload
+                    } else {
+                        displayUploadError(data.error || "An unknown error occurred during upload.");
+                    }
+                } catch (error) {
+                    console.error('Error during image upload:', error);
+                    displayUploadError("Network error or server unavailable. Please try again.");
+                } finally {
+                    showLoading(false); // Hide loading indicator
+                }
+            });
+
+            /**
+             * Fetches and displays attendance logs in the table.
+             */
+            async function fetchAttendanceLogs() {
+                attendanceTableBody.innerHTML = ''; // Clear existing logs
+                logErrorMessageDiv.style.display = 'none'; // Hide any previous log error messages
+
+                try {
+                    const response = await fetch('/attendance');
+                    const logs = await response.json();
+
+                    if (response.ok) {
+                        if (logs.length === 0) {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `<td colspan="3" style="text-align: center; padding: 15px; color: #666;">No attendance records found.</td>`;
+                            attendanceTableBody.appendChild(row);
+                        } else {
+                            logs.forEach(log => {
+                                const row = document.createElement('tr');
+                                row.innerHTML = `
+                                    <td>${log.timestamp}</td>
+                                    <td>${log.faces}</td>
+                                    <td>
+                                        <a href="/${log.image_path}" target="_blank" class="table-link">View Image</a>
+                                    </td>
+                                `;
+                                attendanceTableBody.appendChild(row);
+                            });
+                        }
+                    } else {
+                        logErrorMessageDiv.textContent = logs.error || "Failed to load attendance logs.";
+                        logErrorMessageDiv.style.display = 'block';
+                    }
+                } catch (error) {
+                    console.error('Error fetching attendance logs:', error);
+                    logErrorMessageDiv.textContent = "Network error or server unavailable when fetching logs.";
+                    logErrorMessageDiv.style.display = 'block';
+                }
+            }
+
+            // Initial fetch of attendance logs when the page loads
+            fetchAttendanceLogs();
+
+            // Event listener for the "Refresh Logs" button
+            refreshLogsButton.addEventListener('click', fetchAttendanceLogs);
+        });
+    </script>
+</body>
+</html>
